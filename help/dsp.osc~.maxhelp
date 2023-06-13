@@ -10,7 +10,7 @@
 		}
 ,
 		"classnamespace" : "box",
-		"rect" : [ 397.0, 170.0, 689.0, 504.0 ],
+		"rect" : [ 396.0, 156.0, 689.0, 504.0 ],
 		"bglocked" : 0,
 		"openinpresentation" : 0,
 		"default_fontsize" : 10.0,
@@ -40,13 +40,92 @@
 		"assistshowspatchername" : 0,
 		"boxes" : [ 			{
 				"box" : 				{
-					"id" : "obj-17",
-					"linecount" : 6,
+					"floatoutput" : 1,
+					"id" : "obj-24",
+					"maxclass" : "slider",
+					"numinlets" : 1,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"parameter_enable" : 0,
+					"patching_rect" : [ 509.0, 151.0, 20.0, 112.0 ],
+					"size" : 1.0
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"floatoutput" : 1,
+					"id" : "obj-22",
+					"maxclass" : "slider",
+					"numinlets" : 1,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"parameter_enable" : 0,
+					"patching_rect" : [ 418.333333333333371, 151.0, 20.0, 112.0 ],
+					"size" : 1.0
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"floatoutput" : 1,
+					"id" : "obj-20",
+					"maxclass" : "slider",
+					"numinlets" : 1,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"parameter_enable" : 0,
+					"patching_rect" : [ 327.666666666666686, 151.0, 20.0, 112.0 ],
+					"size" : 1.0
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-18",
 					"maxclass" : "comment",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 315.0, 47.0, 325.0, 79.0 ],
-					"text" : "pulse-width: increment the read pointer by a normalized phase value, such that phase = 1.0 corresponds to a 360 degree phase shift. Positive or negative values are possible.\n\nphase: a phaseOffset = 1.0 corresponds to a 360 degree phase offset.  Positive or negative values are possible."
+					"patching_rect" : [ 190.0, 328.0, 37.0, 19.0 ],
+					"text" : "wave"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"hidden" : 1,
+					"id" : "obj-23",
+					"maxclass" : "newobj",
+					"numinlets" : 1,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 177.0, 268.0, 66.0, 21.0 ],
+					"text" : "loadmess 0"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-21",
+					"items" : [ "sin", ",", "tri", ",", "saw", ",", "rmp", ",", "sqr", ",", "poly_tri", ",", "poly_saw", ",", "poly_sqr", ",", "last" ],
+					"maxclass" : "umenu",
+					"numinlets" : 1,
+					"numoutlets" : 3,
+					"outlettype" : [ "int", "", "" ],
+					"parameter_enable" : 0,
+					"patching_rect" : [ 177.0, 303.0, 50.0, 21.0 ]
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-17",
+					"linecount" : 5,
+					"maxclass" : "comment",
+					"numinlets" : 1,
+					"numoutlets" : 0,
+					"patching_rect" : [ 315.0, 47.0, 325.0, 67.0 ],
+					"text" : "pulse-width: Sets the pulse width for SQR and POLY_SQR (range 0 - 1)\n\nphase: Adds a value 0.0-1.0 (mapped to 0.0-TWO_PI) to the current phase. Useful for PM and \"FM\" synthesis."
 				}
 
 			}
@@ -68,7 +147,7 @@
 					"numinlets" : 1,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 150.0, 242.0, 82.0, 21.0 ],
+					"patching_rect" : [ 249.0, 268.0, 82.0, 21.0 ],
 					"text" : "loadmess 440."
 				}
 
@@ -126,7 +205,7 @@
 					"maxclass" : "comment",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 522.0, 328.0, 73.0, 19.0 ],
+					"patching_rect" : [ 522.0, 328.0, 44.0, 19.0 ],
 					"text" : "phase"
 				}
 
@@ -192,7 +271,7 @@
 					"numinlets" : 1,
 					"numoutlets" : 0,
 					"patching_rect" : [ 16.0, 47.0, 289.0, 79.0 ],
-					"text" : "freq: corresponds to cycles per second. The frequency can be negative, in which case the loop is read in reverse order\n\namp: Increment the read pointer by time in samples, modulo the table size."
+					"text" : "freq: Changes the frequency of the Oscillator, and recalculates phase increment.\n\namp: Sets the amplitude of the waveform.\n\nwaveform: Sets the waveform to be synthesized."
 				}
 
 			}
@@ -227,7 +306,7 @@
 					"maxclass" : "newobj",
 					"numinlets" : 4,
 					"numoutlets" : 1,
-					"outlettype" : [ "" ],
+					"outlettype" : [ "signal" ],
 					"patching_rect" : [ 237.0, 381.0, 291.0, 21.0 ],
 					"text" : "dsp.osc~"
 				}
@@ -275,6 +354,43 @@
 			}
 , 			{
 				"patchline" : 				{
+					"destination" : [ "obj-6", 0 ],
+					"source" : [ "obj-20", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-1", 0 ],
+					"midpoints" : [ 186.5, 366.0, 246.5, 366.0 ],
+					"source" : [ "obj-21", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-3", 0 ],
+					"source" : [ "obj-22", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-21", 0 ],
+					"hidden" : 1,
+					"source" : [ "obj-23", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-5", 0 ],
+					"source" : [ "obj-24", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
 					"destination" : [ "obj-1", 2 ],
 					"source" : [ "obj-3", 0 ]
 				}
@@ -302,7 +418,11 @@
 
 			}
  ],
-		"dependency_cache" : [  ],
+		"dependency_cache" : [ 			{
+				"name" : "dsp.osc~.mxo",
+				"type" : "iLaX"
+			}
+ ],
 		"autosave" : 0
 	}
 

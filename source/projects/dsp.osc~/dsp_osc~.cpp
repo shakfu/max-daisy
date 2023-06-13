@@ -11,9 +11,10 @@
 
 
 enum {
-    TIME = 1, 
-    PHASE, 
-    PHASE_OFFSET,
+    // FREQ is assigned to default left inlet
+    AMP = 1, 
+    PULSE_WIDTH,
+    PHASE,
     MAX_INLET_INDEX // -> maximum number of inlets (0-based)
 };
 
@@ -29,6 +30,7 @@ typedef struct _mdsp {
     double phase;               // Adds a value 0.0-1.0 (mapped to 0.0-TWO_PI) to the current phase. Useful for PM and "FM" synthesis.
     long m_in;                  // space for the inlet number used by all the proxies
     void *inlets[MAX_INLET_INDEX];
+    // t_outlet *outlet; 
 } t_mdsp;
 
 
@@ -39,6 +41,7 @@ void mdsp_assist(t_mdsp *x, void *b, long m, long a, char *s);
 void mdsp_bang(t_mdsp *x);
 void mdsp_anything(t_mdsp* x, t_symbol* s, long argc, t_atom* argv);
 void mdsp_float(t_mdsp *x, double f);
+void mdsp_int(t_mdsp *x, long i);
 void mdsp_dsp64(t_mdsp *x, t_object *dsp64, short *count, double samplerate, long maxvectorsize, long flags);
 void mdsp_perform64(t_mdsp *x, t_object *dsp64, double **ins, long numins, double **outs, long numouts, long sampleframes, long flags, void *userparam);
 
@@ -57,11 +60,12 @@ void ext_main(void *r)
 
     t_class *c = class_new("dsp.osc~", (method)mdsp_new, (method)mdsp_free, (long)sizeof(t_mdsp), 0L, A_GIMME, 0);
 
-    class_addmethod(c, (method)mdsp_float,    "float",    A_FLOAT, 0);
-    class_addmethod(c, (method)mdsp_anything, "anything", A_GIMME, 0);
-    class_addmethod(c, (method)mdsp_bang,     "bang",              0);
-    class_addmethod(c, (method)mdsp_dsp64,    "dsp64",    A_CANT,  0);
-    class_addmethod(c, (method)mdsp_assist,   "assist",   A_CANT,  0);
+    class_addmethod(c, (method)mdsp_float,    "float",    A_FLOAT,   0);
+    class_addmethod(c, (method)mdsp_int,      "int",      A_DEFLONG, 0);    
+    class_addmethod(c, (method)mdsp_anything, "anything", A_GIMME,   0);
+    class_addmethod(c, (method)mdsp_bang,     "bang",                0);
+    class_addmethod(c, (method)mdsp_dsp64,    "dsp64",    A_CANT,    0);
+    class_addmethod(c, (method)mdsp_assist,   "assist",   A_CANT,    0);
 
     class_dspinit(c);
     class_register(CLASS_BOX, c);
@@ -76,7 +80,9 @@ void *mdsp_new(t_symbol *s, long argc, t_atom *argv)
         dsp_setup((t_pxobject *)x, 1);  // MSP inlets: arg is # of signal inlets and is REQUIRED!
         // use 0 if you don't need signal inlets
 
+        // x->outlet = bangout(x);      // optional outlet to bang out at end of cycle
         outlet_new(x, "signal");        // signal outlet (note "signal" rather than NULL)
+        
 
         for(int i = (MAX_INLET_INDEX - 1); i > 0; i--) {
             x->inlets[i] = proxy_new((t_object *)x, i, &x->m_in);
@@ -133,29 +139,25 @@ void mdsp_float(t_mdsp *x, double f)
 {
     switch (proxy_getinlet((t_object *)x)) {
         case 0:
-            // post("received in inlet 0");
             x->freq = f;
-            // post("freq: %f", x->freq);
             break;
         case 1:
-            // post("received in inlet 2");
             x->amp = f;
-            // post("time: %f", x->time);
             break;
         case 2:
-            // post("received in inlet 3");
             x->pulse_width = f;
-            // post("phase: %f", x->phase);
             break;
         case 3:
-            // post("received in inlet 4");
             x->phase = f;
-            // post("phase_offset: %f", x->phase_offset);
             break;
     }
 }
 
-
+void mdsp_int(t_mdsp *x, long i)
+{
+    // post("long: %d", i);
+    x->osc->SetWaveform(i);
+}
 
 void mdsp_dsp64(t_mdsp *x, t_object *dsp64, short *count, double samplerate, long maxvectorsize, long flags)
 {
@@ -178,9 +180,11 @@ void mdsp_perform64(t_mdsp *x, t_object *dsp64, double **ins, long numins, doubl
     x->osc->SetAmp(x->amp);
     x->osc->SetPw(x->pulse_width);
     x->osc->PhaseAdd(x->phase);
-    // x->osc->SetWaveform(x->waveform);
 
     while (n--) {
         *outL++ = x->osc->Process();
+        // if (x->osc->IsEOC()) {
+        //     outlet_bang(x->outlet);
+        // }
     }
 }
