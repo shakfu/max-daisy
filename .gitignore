@@ -1,4 +1,9 @@
 # Prerequisites
+
+.DS_Store
+build
+externals/*
+
 *.d
 
 # Compiled Object files

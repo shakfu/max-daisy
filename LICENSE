@@ -1,4 +1,9 @@
-This is free and unencumbered software released into the public domain.
+Outside of the third-party library used in this project (DaisySP) 
+which retains the MIT License to Electrosmith Corp which is provided
+in its respective folder, 
+
+the rest of the code in this project is free and unencumbered software
+released into the public domain.
 
 Anyone is free to copy, modify, publish, use, compile, sell, or
 distribute this software, either in source code form or as a compiled
