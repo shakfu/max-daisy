@@ -1,6 +1,6 @@
 /**
     @file
-    dsp.osc~: mdsp sine for Max
+    dsp.strev~: daisy_sp stereo reverb for Max
 */
 #include "reverbsc.h"
 #include <cstdlib>
@@ -11,8 +11,8 @@
 
 
 enum {
-    // FEEDBACK is assigned to default left inlet
-    LP_FREQ = 1, 
+    FEEDBACK, // is assigned to default left inlet
+    LP_FREQ, 
     MAX_INLET_INDEX // -> maximum number of inlets (0-based)
 };
 
@@ -21,9 +21,8 @@ enum {
 typedef struct _mdsp {
     t_pxobject ob;              // the object itself (t_pxobject in MSP instead of t_object)
     daisysp::ReverbSc* rev;     // daisy rev object
-    double feedback;            // controls the internal dampening filter's cutoff frequency.
-                                // param freq - low pass frequency. range: 0.0 to sample_rate / 2
-    double lp_freq;             // Sets the amplitude of the waveform.
+    double feedback;            // controls the reverb time, reverb tail becomes infinite when set to 1.0 (range 0.0 to 1.0)
+    double lp_freq;             // controls the internal dampening filter's cutoff frequency. (range: 0.0 to sample_rate / 2)
     long m_in;                  // space for the inlet number used by all the proxies
     void *inlets[MAX_INLET_INDEX];
 } t_mdsp;
@@ -77,9 +76,10 @@ void *mdsp_new(t_symbol *s, long argc, t_atom *argv)
         outlet_new(x, "signal");        // signal outlet (note "signal" rather than NULL)
         
 
-        for(int i = (MAX_INLET_INDEX - 1); i > 0; i--) {
-            x->inlets[i] = proxy_new((t_object *)x, i, &x->m_in);
-        }
+        // for(int i = (MAX_INLET_INDEX - 1); i > 0; i--) {
+        //     post("i: %d", i);
+        //     x->inlets[i] = proxy_new((t_object *)x, i, &x->m_in);
+        // }
 
         x->rev = new daisysp::ReverbSc;
         x->feedback = 100.0;
@@ -118,9 +118,14 @@ void mdsp_bang(t_mdsp *x)
 
 void mdsp_anything(t_mdsp* x, t_symbol* s, long argc, t_atom* argv)
 {
+    if (s != gensym("") && argc > 0) {
+        if (s == gensym("feedback")) {
+            x->feedback = atom_getfloat(argv);
 
-    if (s != gensym("")) {
-        post("symbol: %s", s->s_name);
+        }
+        else if (s == gensym("lp_freq")) {
+            x->lp_freq = atom_getfloat(argv);
+        }
     }
 }
 
@@ -163,18 +168,12 @@ void mdsp_perform64(t_mdsp *x, t_object *dsp64, double **ins, long numins, doubl
     float out_left;
     float out_right;
 
-    // while (n--) {
-    //     *outL++ = *inL++;
-    //     *outR++ = *inR++;
-    // }
-
     while (n--) {
         in_left = *inL++;
         in_right = *inR++;
         x->rev->Process(in_left, in_right, &out_left, &out_right);
+        // x->rev->Process(const float &in1, const float &in2, float *out1, float *out2);
         *outL++ = (t_double)out_left;
         *outR++ = (t_double)out_right;
-        // x->rev->Process(const float &in1, const float &in2, float *out1, float *out2);
-        // *outL++ = x->rev->Process();
     }
 }
