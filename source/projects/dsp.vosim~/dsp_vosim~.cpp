@@ -1,8 +1,8 @@
 /**
     @file
-    dsp.strev~: daisy_sp stereo reverb for Max
+    dsp.vosim~: daisysp band limited oscillator
 */
-#include "reverbsc.h"
+#include "vosim.h"
 #include <cstdlib>
 
 #include "ext.h"
@@ -10,21 +10,13 @@
 #include "z_dsp.h"
 
 
-enum {
-    FEEDBACK, // is assigned to default left inlet
-    LP_FREQ, 
-    MAX_INLET_INDEX // -> maximum number of inlets (0-based)
-};
-
-
-// struct to represent the object's state
 typedef struct _mdsp {
     t_pxobject ob;              // the object itself (t_pxobject in MSP instead of t_object)
-    daisysp::ReverbSc* rev;     // daisy rev object
-    double feedback;            // controls the reverb time, reverb tail becomes infinite when set to 1.0 (range 0.0 to 1.0)
-    double lp_freq;             // controls the internal dampening filter's cutoff frequency. (range: 0.0 to sample_rate / 2)
-    long m_in;                  // space for the inlet number used by all the proxies
-    void *inlets[MAX_INLET_INDEX];
+    daisysp::VosimOscillator* osc;        // daisy band limited osc object
+    double freq;                // Set carrier frequency in Hz.
+    double form1_freq;          // Set formant 1 frequency in Hz.
+    double form2_freq;          // Set formant 2 frequency in Hz.
+    double shape;               // Shape to set. Works -1 to 1
 } t_mdsp;
 
 
@@ -34,7 +26,7 @@ void mdsp_free(t_mdsp *x);
 void mdsp_assist(t_mdsp *x, void *b, long m, long a, char *s);
 void mdsp_bang(t_mdsp *x);
 void mdsp_anything(t_mdsp* x, t_symbol* s, long argc, t_atom* argv);
-void mdsp_float(t_mdsp *x, double f);
+void mdsp_int(t_mdsp *x, long i);
 void mdsp_dsp64(t_mdsp *x, t_object *dsp64, short *count, double samplerate, long maxvectorsize, long flags);
 void mdsp_perform64(t_mdsp *x, t_object *dsp64, double **ins, long numins, double **outs, long numouts, long sampleframes, long flags, void *userparam);
 
@@ -51,9 +43,8 @@ void ext_main(void *r)
     // unless you need to free allocated memory, in which case you should call dsp_free from
     // your custom free function.
 
-    t_class *c = class_new("dsp.strev~", (method)mdsp_new, (method)mdsp_free, (long)sizeof(t_mdsp), 0L, A_GIMME, 0);
+    t_class *c = class_new("dsp.vosim~", (method)mdsp_new, (method)mdsp_free, (long)sizeof(t_mdsp), 0L, A_GIMME, 0);
 
-    class_addmethod(c, (method)mdsp_float,    "float",    A_FLOAT,   0);
     class_addmethod(c, (method)mdsp_anything, "anything", A_GIMME,   0);
     class_addmethod(c, (method)mdsp_bang,     "bang",                0);
     class_addmethod(c, (method)mdsp_dsp64,    "dsp64",    A_CANT,    0);
@@ -69,21 +60,15 @@ void *mdsp_new(t_symbol *s, long argc, t_atom *argv)
     t_mdsp *x = (t_mdsp *)object_alloc(mdsp_class);
 
     if (x) {
-        dsp_setup((t_pxobject *)x, 2);  // MSP inlets: arg is # of signal inlets and is REQUIRED!
-        // use 0 if you don't need signal inlets
+        dsp_setup((t_pxobject *)x, 1);  // MSP inlets: arg is # of signal inlets and is REQUIRED!
 
         outlet_new(x, "signal");        // signal outlet (note "signal" rather than NULL)
-        outlet_new(x, "signal");        // signal outlet (note "signal" rather than NULL)
-        
 
-        // for(int i = (MAX_INLET_INDEX - 1); i > 0; i--) {
-        //     post("i: %d", i);
-        //     x->inlets[i] = proxy_new((t_object *)x, i, &x->m_in);
-        // }
-
-        x->rev = new daisysp::ReverbSc;
-        x->feedback = 100.0;
-        x->lp_freq = 0.5;
+        x->osc = new daisysp::VosimOscillator;
+        x->freq = 100.0;
+        x->form1_freq = 0.5;
+        x->form2_freq = 0.5;
+        x->shape = 0.0;
     }
     return (x);
 }
@@ -91,12 +76,8 @@ void *mdsp_new(t_symbol *s, long argc, t_atom *argv)
 
 void mdsp_free(t_mdsp *x)
 {
-    delete x->rev;
+    delete x->osc;
     dsp_free((t_pxobject *)x);
-    for(int i = (MAX_INLET_INDEX - 1); i > 0; i--) {
-        object_free(x->inlets[i]);
-    }
-
 }
 
 
@@ -119,35 +100,28 @@ void mdsp_bang(t_mdsp *x)
 void mdsp_anything(t_mdsp* x, t_symbol* s, long argc, t_atom* argv)
 {
     if (s != gensym("") && argc > 0) {
-        if (s == gensym("feedback")) {
-            x->feedback = atom_getfloat(argv);
-
+        if (s == gensym("freq")) {
+            x->freq = atom_getfloat(argv);
         }
-        else if (s == gensym("lp_freq")) {
-            x->lp_freq = atom_getfloat(argv);
+        else if (s == gensym("form1_freq")) {
+            x->form1_freq = atom_getfloat(argv);
+        }
+        else if (s == gensym("form2_freq")) {
+            x->form2_freq = atom_getfloat(argv);
+        }
+        else if (s == gensym("shape")) {
+            x->shape = atom_getfloat(argv);
         }
     }
 }
 
-
-void mdsp_float(t_mdsp *x, double f)
-{
-    switch (proxy_getinlet((t_object *)x)) {
-        case 0:
-            x->feedback = f;
-            break;
-        case 1:
-            x->lp_freq = f;
-            break;
-    }
-}
 
 void mdsp_dsp64(t_mdsp *x, t_object *dsp64, short *count, double samplerate, long maxvectorsize, long flags)
 {
-    post("sample rate: %f", samplerate);
-    post("maxvectorsize: %d", maxvectorsize);
+    // post("sample rate: %f", samplerate);
+    // post("maxvectorsize: %d", maxvectorsize);
 
-    x->rev->Init(samplerate);
+    x->osc->Init(samplerate);
 
     object_method(dsp64, gensym("dsp_add64"), x, mdsp_perform64, 0, NULL);
 }
@@ -156,24 +130,14 @@ void mdsp_dsp64(t_mdsp *x, t_object *dsp64, short *count, double samplerate, lon
 void mdsp_perform64(t_mdsp *x, t_object *dsp64, double **ins, long numins, double **outs, long numouts, long sampleframes, long flags, void *userparam)
 {
     t_double *inL = ins[0];     // we get audio for each inlet of the object from the **ins argument
-    t_double *inR = ins[1];     // we get audio for each inlet of the object from the **ins argument
     t_double *outL = outs[0];   // we get audio for each outlet of the object from the **outs argument
-    t_double *outR = outs[1];   // we get audio for each outlet of the object from the **outs argument
-
     int n = sampleframes;       // n = 64
-    x->rev->SetFeedback(x->feedback);
-    x->rev->SetLpFreq(x->lp_freq);
-    float in_left;
-    float in_right;
-    float out_left;
-    float out_right;
+    x->osc->SetFreq(x->freq);
+    x->osc->SetForm1Freq(x->form1_freq);
+    x->osc->SetForm2Freq(x->form2_freq);
+    x->osc->SetShape(x->shape);
 
     while (n--) {
-        in_left = *inL++;
-        in_right = *inR++;
-        x->rev->Process(in_left, in_right, &out_left, &out_right);
-        // x->rev->Process(const float &in1, const float &in2, float *out1, float *out2);
-        *outL++ = (t_double)out_left;
-        *outR++ = (t_double)out_right;
+        *outL++ = x->osc->Process();
     }
 }

@@ -40,6 +40,32 @@
 		"assistshowspatchername" : 0,
 		"boxes" : [ 			{
 				"box" : 				{
+					"hidden" : 1,
+					"id" : "obj-12",
+					"maxclass" : "newobj",
+					"numinlets" : 1,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 236.0, 112.0, 76.0, 21.0 ],
+					"text" : "loadmess 0.5"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"hidden" : 1,
+					"id" : "obj-3",
+					"maxclass" : "newobj",
+					"numinlets" : 1,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 351.333333333333371, 112.0, 85.0, 21.0 ],
+					"text" : "loadmess 1500"
+				}
+
+			}
+, 			{
+				"box" : 				{
 					"id" : "obj-10",
 					"maxclass" : "message",
 					"numinlets" : 2,
@@ -183,7 +209,7 @@
 					"numinlets" : 1,
 					"numoutlets" : 0,
 					"patching_rect" : [ 16.0, 16.0, 359.0, 21.0 ],
-					"text" : "dsp.strev~ : DaisySP Library - Stereo Reverb"
+					"text" : "dsp.reverbsc~ : DaisySP Library - Stereo Reverb"
 				}
 
 			}
@@ -207,7 +233,7 @@
 					"numoutlets" : 2,
 					"outlettype" : [ "signal", "signal" ],
 					"patching_rect" : [ 237.0, 381.0, 268.333333333333371, 21.0 ],
-					"text" : "dsp.strev~"
+					"text" : "dsp.reverbsc~"
 				}
 
 			}
@@ -244,6 +270,14 @@
 			}
 , 			{
 				"patchline" : 				{
+					"destination" : [ "obj-2", 0 ],
+					"hidden" : 1,
+					"source" : [ "obj-12", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
 					"destination" : [ "obj-9", 0 ],
 					"source" : [ "obj-2", 0 ]
 				}
@@ -253,6 +287,14 @@
 				"patchline" : 				{
 					"destination" : [ "obj-6", 0 ],
 					"source" : [ "obj-20", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-20", 0 ],
+					"hidden" : 1,
+					"source" : [ "obj-3", 0 ]
 				}
 
 			}
@@ -295,7 +337,7 @@
 			}
  ],
 		"dependency_cache" : [ 			{
-				"name" : "dsp.strev~.mxo",
+				"name" : "dsp.reverbsc~.mxo",
 				"type" : "iLaX"
 			}
 , 			{
