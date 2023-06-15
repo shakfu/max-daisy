@@ -6,6 +6,14 @@ project(${THIS_FOLDER_NAME})
 option(C74_BUILD_FAT "Build Universal Externals")
 
 
+# use ccache if available
+find_program(CCACHE_PROGRAM ccache)
+if(CCACHE_PROGRAM)
+    message(STATUS "Found ccache in ${CCACHE_PROGRAM}")
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_PROGRAM}")
+endif()
+
+
 if (APPLE)
     if (${CMAKE_GENERATOR} MATCHES "Xcode")
             if (${XCODE_VERSION} VERSION_LESS 10)
