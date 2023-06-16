@@ -19,7 +19,7 @@ enum {
 
 
 // struct to represent the object's state
-typedef struct _mdsp {
+typedef struct _mxd {
     t_pxobject ob;              // the object itself (t_pxobject in MSP instead of t_object)
     daisysp::BlOsc* osc;        // daisy band limited osc object
     double freq;                // Float freq: Set oscillator frequency in Hz.
@@ -29,23 +29,23 @@ typedef struct _mdsp {
     long m_in;                  // space for the inlet number used by all the proxies
     void *inlets[MAX_INLET_INDEX];
     // t_outlet *outlet; 
-} t_mdsp;
+} t_mxd;
 
 
 // method prototypes
-void *mdsp_new(t_symbol *s, long argc, t_atom *argv);
-void mdsp_free(t_mdsp *x);
-void mdsp_assist(t_mdsp *x, void *b, long m, long a, char *s);
-void mdsp_bang(t_mdsp *x);
-void mdsp_anything(t_mdsp* x, t_symbol* s, long argc, t_atom* argv);
-void mdsp_float(t_mdsp *x, double f);
-void mdsp_int(t_mdsp *x, long i);
-void mdsp_dsp64(t_mdsp *x, t_object *dsp64, short *count, double samplerate, long maxvectorsize, long flags);
-void mdsp_perform64(t_mdsp *x, t_object *dsp64, double **ins, long numins, double **outs, long numouts, long sampleframes, long flags, void *userparam);
+void *mxd_new(t_symbol *s, long argc, t_atom *argv);
+void mxd_free(t_mxd *x);
+void mxd_assist(t_mxd *x, void *b, long m, long a, char *s);
+void mxd_bang(t_mxd *x);
+void mxd_anything(t_mxd* x, t_symbol* s, long argc, t_atom* argv);
+void mxd_float(t_mxd *x, double f);
+void mxd_int(t_mxd *x, long i);
+void mxd_dsp64(t_mxd *x, t_object *dsp64, short *count, double samplerate, long maxvectorsize, long flags);
+void mxd_perform64(t_mxd *x, t_object *dsp64, double **ins, long numins, double **outs, long numouts, long sampleframes, long flags, void *userparam);
 
 
 // global class pointer variable
-static t_class *mdsp_class = NULL;
+static t_class *mxd_class = NULL;
 
 
 //-----------------------------------------------------------------------------------------------
@@ -56,23 +56,23 @@ void ext_main(void *r)
     // unless you need to free allocated memory, in which case you should call dsp_free from
     // your custom free function.
 
-    t_class *c = class_new("dsp.blosc~", (method)mdsp_new, (method)mdsp_free, (long)sizeof(t_mdsp), 0L, A_GIMME, 0);
+    t_class *c = class_new("dsp.blosc~", (method)mxd_new, (method)mxd_free, (long)sizeof(t_mxd), 0L, A_GIMME, 0);
 
-    class_addmethod(c, (method)mdsp_float,    "float",    A_FLOAT,   0);
-    class_addmethod(c, (method)mdsp_int,      "int",      A_DEFLONG, 0);    
-    class_addmethod(c, (method)mdsp_anything, "anything", A_GIMME,   0);
-    class_addmethod(c, (method)mdsp_bang,     "bang",                0);
-    class_addmethod(c, (method)mdsp_dsp64,    "dsp64",    A_CANT,    0);
-    class_addmethod(c, (method)mdsp_assist,   "assist",   A_CANT,    0);
+    class_addmethod(c, (method)mxd_float,    "float",    A_FLOAT,   0);
+    class_addmethod(c, (method)mxd_int,      "int",      A_DEFLONG, 0);    
+    class_addmethod(c, (method)mxd_anything, "anything", A_GIMME,   0);
+    class_addmethod(c, (method)mxd_bang,     "bang",                0);
+    class_addmethod(c, (method)mxd_dsp64,    "dsp64",    A_CANT,    0);
+    class_addmethod(c, (method)mxd_assist,   "assist",   A_CANT,    0);
 
     class_dspinit(c);
     class_register(CLASS_BOX, c);
-    mdsp_class = c;
+    mxd_class = c;
 }
 
-void *mdsp_new(t_symbol *s, long argc, t_atom *argv)
+void *mxd_new(t_symbol *s, long argc, t_atom *argv)
 {
-    t_mdsp *x = (t_mdsp *)object_alloc(mdsp_class);
+    t_mxd *x = (t_mxd *)object_alloc(mxd_class);
 
     if (x) {
         dsp_setup((t_pxobject *)x, 1);  // MSP inlets: arg is # of signal inlets and is REQUIRED!
@@ -96,7 +96,7 @@ void *mdsp_new(t_symbol *s, long argc, t_atom *argv)
 }
 
 
-void mdsp_free(t_mdsp *x)
+void mxd_free(t_mxd *x)
 {
     delete x->osc;
     dsp_free((t_pxobject *)x);
@@ -107,7 +107,7 @@ void mdsp_free(t_mdsp *x)
 }
 
 
-void mdsp_assist(t_mdsp *x, void *b, long m, long a, char *s)
+void mxd_assist(t_mxd *x, void *b, long m, long a, char *s)
 {
     // FIXME: assign to inlets
     if (m == ASSIST_INLET) { //inlet
@@ -118,12 +118,12 @@ void mdsp_assist(t_mdsp *x, void *b, long m, long a, char *s)
     }
 }
 
-void mdsp_bang(t_mdsp *x)
+void mxd_bang(t_mxd *x)
 {
     post("bang");
 }
 
-void mdsp_anything(t_mdsp* x, t_symbol* s, long argc, t_atom* argv)
+void mxd_anything(t_mxd* x, t_symbol* s, long argc, t_atom* argv)
 {
 
     if (s != gensym("")) {
@@ -132,7 +132,7 @@ void mdsp_anything(t_mdsp* x, t_symbol* s, long argc, t_atom* argv)
 }
 
 
-void mdsp_float(t_mdsp *x, double f)
+void mxd_float(t_mxd *x, double f)
 {
     switch (proxy_getinlet((t_object *)x)) {
         case 0:
@@ -147,7 +147,7 @@ void mdsp_float(t_mdsp *x, double f)
     }
 }
 
-void mdsp_int(t_mdsp *x, long i)
+void mxd_int(t_mxd *x, long i)
 {
     // post("long: %d", i);
     if (i < 5) {
@@ -157,7 +157,7 @@ void mdsp_int(t_mdsp *x, long i)
     }
 }
 
-void mdsp_dsp64(t_mdsp *x, t_object *dsp64, short *count, double samplerate, long maxvectorsize, long flags)
+void mxd_dsp64(t_mxd *x, t_object *dsp64, short *count, double samplerate, long maxvectorsize, long flags)
 {
     post("sample rate: %f", samplerate);
     post("maxvectorsize: %d", maxvectorsize);
@@ -165,11 +165,11 @@ void mdsp_dsp64(t_mdsp *x, t_object *dsp64, short *count, double samplerate, lon
     x->osc->Init(samplerate);
     x->osc->Reset();
 
-    object_method(dsp64, gensym("dsp_add64"), x, mdsp_perform64, 0, NULL);
+    object_method(dsp64, gensym("dsp_add64"), x, mxd_perform64, 0, NULL);
 }
 
 
-void mdsp_perform64(t_mdsp *x, t_object *dsp64, double **ins, long numins, double **outs, long numouts, long sampleframes, long flags, void *userparam)
+void mxd_perform64(t_mxd *x, t_object *dsp64, double **ins, long numins, double **outs, long numouts, long sampleframes, long flags, void *userparam)
 {
     t_double *inL = ins[0];     // we get audio for each inlet of the object from the **ins argument
     t_double *outL = outs[0];   // we get audio for each outlet of the object from the **outs argument

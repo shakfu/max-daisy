@@ -3,6 +3,7 @@
 #define DSY_OSCILLATORBANK_H
 
 #include <stdint.h>
+#include <math.h>
 #ifdef __cplusplus
 
 /** @file oscillatorbank.h */

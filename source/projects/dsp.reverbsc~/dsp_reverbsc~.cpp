@@ -14,26 +14,26 @@
 
 
 // struct to represent the object's state
-typedef struct _mdsp {
+typedef struct _mxd {
     t_pxobject ob;              // the object itself (t_pxobject in MSP instead of t_object)
     daisysp::ReverbSc* rev;     // daisy rev object
     double feedback;            // controls the reverb time, reverb tail becomes infinite when set to 1.0 (range 0.0 to 1.0)
     double lp_freq;             // controls the internal dampening filter's cutoff frequency. (range: 0.0 to sample_rate / 2)
-} t_mdsp;
+} t_mxd;
 
 
 // method prototypes
-void *mdsp_new(t_symbol *s, long argc, t_atom *argv);
-void mdsp_free(t_mdsp *x);
-void mdsp_assist(t_mdsp *x, void *b, long m, long a, char *s);
-void mdsp_bang(t_mdsp *x);
-void mdsp_anything(t_mdsp* x, t_symbol* s, long argc, t_atom* argv);
-void mdsp_dsp64(t_mdsp *x, t_object *dsp64, short *count, double samplerate, long maxvectorsize, long flags);
-void mdsp_perform64(t_mdsp *x, t_object *dsp64, double **ins, long numins, double **outs, long numouts, long sampleframes, long flags, void *userparam);
+void *mxd_new(t_symbol *s, long argc, t_atom *argv);
+void mxd_free(t_mxd *x);
+void mxd_assist(t_mxd *x, void *b, long m, long a, char *s);
+void mxd_bang(t_mxd *x);
+void mxd_anything(t_mxd* x, t_symbol* s, long argc, t_atom* argv);
+void mxd_dsp64(t_mxd *x, t_object *dsp64, short *count, double samplerate, long maxvectorsize, long flags);
+void mxd_perform64(t_mxd *x, t_object *dsp64, double **ins, long numins, double **outs, long numouts, long sampleframes, long flags, void *userparam);
 
 
 // global class pointer variable
-static t_class *mdsp_class = NULL;
+static t_class *mxd_class = NULL;
 
 
 //-----------------------------------------------------------------------------------------------
@@ -44,21 +44,21 @@ void ext_main(void *r)
     // unless you need to free allocated memory, in which case you should call dsp_free from
     // your custom free function.
 
-    t_class *c = class_new("dsp.reverbsc~", (method)mdsp_new, (method)mdsp_free, (long)sizeof(t_mdsp), 0L, A_GIMME, 0);
+    t_class *c = class_new("dsp.reverbsc~", (method)mxd_new, (method)mxd_free, (long)sizeof(t_mxd), 0L, A_GIMME, 0);
 
-    class_addmethod(c, (method)mdsp_anything, "anything", A_GIMME,   0);
-    class_addmethod(c, (method)mdsp_bang,     "bang",                0);
-    class_addmethod(c, (method)mdsp_dsp64,    "dsp64",    A_CANT,    0);
-    class_addmethod(c, (method)mdsp_assist,   "assist",   A_CANT,    0);
+    class_addmethod(c, (method)mxd_anything, "anything", A_GIMME,   0);
+    class_addmethod(c, (method)mxd_bang,     "bang",                0);
+    class_addmethod(c, (method)mxd_dsp64,    "dsp64",    A_CANT,    0);
+    class_addmethod(c, (method)mxd_assist,   "assist",   A_CANT,    0);
 
     class_dspinit(c);
     class_register(CLASS_BOX, c);
-    mdsp_class = c;
+    mxd_class = c;
 }
 
-void *mdsp_new(t_symbol *s, long argc, t_atom *argv)
+void *mxd_new(t_symbol *s, long argc, t_atom *argv)
 {
-    t_mdsp *x = (t_mdsp *)object_alloc(mdsp_class);
+    t_mxd *x = (t_mxd *)object_alloc(mxd_class);
 
     if (x) {
         dsp_setup((t_pxobject *)x, N_CHANNELS);
@@ -76,14 +76,14 @@ void *mdsp_new(t_symbol *s, long argc, t_atom *argv)
 }
 
 
-void mdsp_free(t_mdsp *x)
+void mxd_free(t_mxd *x)
 {
     delete x->rev;
     dsp_free((t_pxobject *)x);
 }
 
 
-void mdsp_assist(t_mdsp *x, void *b, long m, long a, char *s)
+void mxd_assist(t_mxd *x, void *b, long m, long a, char *s)
 {
     // FIXME: assign to inlets
     if (m == ASSIST_INLET) { //inlet
@@ -94,12 +94,12 @@ void mdsp_assist(t_mdsp *x, void *b, long m, long a, char *s)
     }
 }
 
-void mdsp_bang(t_mdsp *x)
+void mxd_bang(t_mxd *x)
 {
     post("bang");
 }
 
-void mdsp_anything(t_mdsp* x, t_symbol* s, long argc, t_atom* argv)
+void mxd_anything(t_mxd* x, t_symbol* s, long argc, t_atom* argv)
 {
     if (s != gensym("") && argc > 0) {
         if (s == gensym("feedback")) {
@@ -114,18 +114,18 @@ void mdsp_anything(t_mdsp* x, t_symbol* s, long argc, t_atom* argv)
 
 
 
-void mdsp_dsp64(t_mdsp *x, t_object *dsp64, short *count, double samplerate, long maxvectorsize, long flags)
+void mxd_dsp64(t_mxd *x, t_object *dsp64, short *count, double samplerate, long maxvectorsize, long flags)
 {
     // post("sample rate: %f", samplerate);
     // post("maxvectorsize: %d", maxvectorsize);
 
     x->rev->Init(samplerate);
 
-    object_method(dsp64, gensym("dsp_add64"), x, mdsp_perform64, 0, NULL);
+    object_method(dsp64, gensym("dsp_add64"), x, mxd_perform64, 0, NULL);
 }
 
 
-void mdsp_perform64(t_mdsp *x, t_object *dsp64, double **ins, long numins, double **outs, long numouts, long sampleframes, long flags, void *userparam)
+void mxd_perform64(t_mxd *x, t_object *dsp64, double **ins, long numins, double **outs, long numouts, long sampleframes, long flags, void *userparam)
 {
     t_double *inL = ins[0];     // we get audio for each inlet of the object from the **ins argument
     t_double *inR = ins[1];     // we get audio for each inlet of the object from the **ins argument
